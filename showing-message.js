@@ -5,11 +5,19 @@ const server = http.createServer((req, res) => {
   const url = req.url;
   const method = req.method;
   if (url === "/") {
+    const messageData = fs.readFileSync("message.txt").toString().split(",");
+    console.log(messageData);
     res.write("<html>");
     res.write("<head><title>Enter Message</title></head>");
+    res.write("<body>");
+    for (let x of messageData) {
+      res.write(`<div>${x}</div>`);
+    }
+
     res.write(
-      '<body><form action="/message" method="POST" ><input type="text" name="message" /><button type="submit">send</button></form></body>'
+      '<form action="/message" method="POST" ><input type="text" name="message" /><button type="submit">send</button></form>'
     );
+    res.write("</body>");
     res.write("</html>");
     return res.end();
   }
@@ -22,11 +30,21 @@ const server = http.createServer((req, res) => {
     return req.on("end", () => {
       const parsedBody = Buffer.concat(body).toString();
       const message = parsedBody.split("=")[1];
-      fs.writeFile("message.txt", message, (err) => {
-        res.statusCode = 302;
-        res.setHeader("Location", "/");
-        return res.end();
+      fs.appendFile("message.txt", `${message},`, (err) => {
+        if (err) {
+          console.log(err);
+          res.end("server error");
+        } else {
+          res.statusCode = 302;
+          res.setHeader("Location", "/");
+          return res.end();
+        }
       });
+      //   fs.writeFile("message.txt", message, (err) => {
+      //     res.statusCode = 302;
+      //     res.setHeader("Location", "/");
+      //     return res.end();
+      //   });
     });
   }
   res.setHeader("Content-Type", "text/html");
